@@ -1,3 +1,6 @@
+import org.jetbrains.exposed.dao.Entity
+import org.jetbrains.exposed.dao.EntityClass
+import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IdTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.javatime.date
@@ -7,7 +10,6 @@ import java.util.*
 
 data class Grade(
     val studentId: UUID,
-//    val studentName: String,
     val value: Int? = null,
     val date: LocalDate? = null,
 )
@@ -18,6 +20,7 @@ data class Course(
     val id: UUID? = UUID.randomUUID()
 )
 
+//region Tables
 object GradeTable : IdTable<UUID>("grades") {
     override val id = uuid("id").entityId().uniqueIndex()
     val value = integer("value").nullable()
@@ -30,7 +33,9 @@ object CourseTable : IdTable<UUID>("courses") {
     override val id = uuid("id").entityId().uniqueIndex()
     val name = varchar("name", 512)
 }
+//endregion
 
+//region DSL
 fun UpdateBuilder<Number>.save(course: Course) {
     this[CourseTable.id] = course.id ?: UUID.randomUUID()
     this[CourseTable.name] = course.name
@@ -86,4 +91,29 @@ fun setGrade(courseId: UUID, studentId: UUID, newValue: Int) {
         it[value] = newValue
         it[date] = LocalDate.now()
     }
+}
+//endregion
+
+class GradeDao(id: EntityID<UUID>) : Entity<UUID>(id) {
+    companion object : EntityClass<UUID, GradeDao>(GradeTable)
+
+    var student by StudentDao referencedOn GradeTable.student
+    var course by CourseDao referencedOn GradeTable.course
+    var value by GradeTable.value
+    val date by GradeTable.date
+
+    override fun toString() = "Студент $student - Курс $course - $value - $date"
+}
+
+class CourseDao(id: EntityID<UUID>) : Entity<UUID>(id) {
+    companion object : EntityClass<UUID, CourseDao>(CourseTable)
+
+    var name by CourseTable.name
+    val grades by GradeDao referrersOn GradeTable.course
+
+    override fun toString() =
+        "Курс $name"
+
+    fun fullString() =
+        toString() + "\t" + grades.joinToString { it.toString() }
 }
