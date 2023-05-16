@@ -1,10 +1,12 @@
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.statements.InsertStatement
 import org.jetbrains.exposed.sql.transactions.transaction
 
 fun main() {
     Database.connect("jdbc:h2:mem:test", driver = "org.h2.Driver")
     transaction {
+        addLogger(StdOutSqlLogger)
         SchemaUtils.create(StudentTable)
 
         val students = listOf("Penny", "Amy").map { Student(it, "Girls") } +
@@ -12,8 +14,8 @@ fun main() {
 
         // create
         students.map { student ->
-            StudentTable.insert {
-                it.save(student)
+            StudentTable.insert { insertStatement: InsertStatement<Number> ->
+                insertStatement.save(student)
             }
         }
 

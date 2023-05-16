@@ -2,6 +2,7 @@ import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IdTable
+import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.statements.UpdateBuilder
 import java.util.*
@@ -14,9 +15,9 @@ data class Student(
 
 //region DSL
 object StudentTable : IdTable<UUID>("students") {
-    override val id = uuid("id").entityId().uniqueIndex()
-    val name = varchar("name", 512)
-    val group = varchar("group", 10).nullable()
+    override val id: Column<EntityID<UUID>> = uuid("id").entityId().uniqueIndex()
+    val name: Column<String> = varchar("name", 512)
+    val group: Column<String?> = varchar("group", 10).nullable()
 }
 
 fun UpdateBuilder<Number>.save(student: Student) {
