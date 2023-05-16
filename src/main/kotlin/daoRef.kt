@@ -33,7 +33,7 @@ fun main() {
         println("CТУДЕНТЫ: $dbStudents")
         println("КУРСЫ: $dbCourses")
 
-        val dbGrades = dbCourses.map { courseDao ->
+        val dbGrades = dbCourses.flatMap  { courseDao ->
             dbStudents.map { studentDao ->
                 GradeDao.new(UUID.randomUUID()) {
                     student = studentDao
@@ -41,6 +41,16 @@ fun main() {
                 }
             }
         }
+        println(CourseDao.all().map { it.fullString() })
+
+        val pennyId = dbStudents.find { it.name == "Penny" }?.id!!
+        val mathId = dbCourses.find { it.name == "Math" }?.id!!
+        val pennyGradeId = dbGrades.find { it.course.id == mathId && it.student.id==pennyId }?.id!!
+        val pennyGrade = GradeDao.find{
+            GradeTable.id eq pennyGradeId
+        }.first()
+        pennyGrade.value = 5
+
         println(CourseDao.all().map { it.fullString() })
     }
     transaction {
